@@ -1,39 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Pay for Your Order</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
       background: #f9f9f9;
       padding: 2em;
-      color: #333;
     }
     .container {
       max-width: 600px;
       margin: auto;
-      background: white;
+      background: #fff;
       padding: 2em;
-      border-radius: 12px;
-      text-align: center;
+      border-radius: 10px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      text-align: center;
     }
-    h2 {
-      color: #2c3e50;
+    .info {
+      margin-bottom: 1.5em;
+      line-height: 1.6;
+      font-size: 1.1em;
     }
     .qr-code {
       margin: 1.5em 0;
     }
+    .qr-code img {
+      width: 220px;
+      border-radius: 10px;
+    }
     .upi-button {
       display: inline-block;
+      padding: 14px 20px;
       background: #27ae60;
       color: white;
-      padding: 14px 20px;
+      text-decoration: none;
       border-radius: 6px;
       font-size: 16px;
-      text-decoration: none;
     }
     .upi-button:hover {
       background: #1e8449;
@@ -47,33 +52,45 @@
 <body>
   <div class="container">
     <h2>🛒 Pay for Your Order</h2>
-    <p id="orderInfo">Loading order info...</p>
 
-    <div class="qr-code">
-      <img id="qr" src="" alt="QR Code" style="width:220px; border-radius:10px;">
+    <div class="info" id="customerDetails">
+      Loading...
     </div>
 
-    <a id="payLink" class="upi-button" href="#" target="_blank">Pay Now</a>
+    <div class="qr-code">
+      <img id="qrImg" src="" alt="QR Code">
+    </div>
 
-    <p class="notice">📱 Use UPI apps like GPay, PhonePe, or Paytm to complete the payment.</p>
+    <a id="upiLink" class="upi-button" href="#" target="_blank">Pay Now</a>
+
+    <p class="notice">📱 Please use UPI apps like GPay, PhonePe, Paytm, and share screenshot after payment.</p>
   </div>
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const amount = urlParams.get('amount');
-    const order = urlParams.get('order');
+    const orderId = urlParams.get('order');
+    const name = urlParams.get('name');
+    const mobile = urlParams.get('mobile');
+    const date = urlParams.get('date');
 
     const upiID = "pothabattulavinodyadav@ybl";
-    const payeeName = encodeURIComponent("Vinod Yadav");
-    const txnNote = encodeURIComponent(`Order #${order} Payment`);
-    const upiLink = `upi://pay?pa=${upiID}&pn=${payeeName}&am=${amount}&cu=INR&tn=${txnNote}`;
+    const upiNote = `Order #${orderId} by ${name} (${mobile})`;
 
-    document.getElementById("orderInfo").innerText = `Pay ₹${amount} for Order #${order}`;
-    document.getElementById("payLink").href = upiLink;
-    document.getElementById("payLink").innerText = `Pay ₹${amount} Now`;
+    const upiUrl = `upi://pay?pa=${upiID}&pn=Vinod%20Yadav&am=${amount}&cu=INR&tn=${encodeURIComponent(upiNote)}`;
+    const qrUrl = `https://chart.googleapis.com/chart?cht=qr&chs=240x240&chl=${encodeURIComponent(upiUrl)}`;
 
-    const qrImg = `https://chart.googleapis.com/chart?cht=qr&chs=240x240&chl=${encodeURIComponent(upiLink)}`;
-    document.getElementById("qr").src = qrImg;
+    document.getElementById("upiLink").href = upiUrl;
+    document.getElementById("upiLink").textContent = `Pay ₹${amount} Now`;
+    document.getElementById("qrImg").src = qrUrl;
+
+    document.getElementById("customerDetails").innerHTML = `
+      <strong>Name:</strong> ${name}<br>
+      <strong>Mobile:</strong> ${mobile}<br>
+      <strong>Order ID:</strong> ${orderId}<br>
+      <strong>Amount:</strong> ₹${amount}<br>
+      <strong>Date:</strong> ${date}
+    `;
   </script>
 </body>
 </html>
