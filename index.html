@@ -1,98 +1,70 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Create Payment Link</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f4f4f4;
-      padding: 2em;
-    }
-    .container {
-      max-width: 600px;
-      margin: auto;
-      background: #fff;
-      padding: 2em;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-    input {
-      width: 90%;
-      padding: 12px;
-      margin: 0.5em 0;
-      font-size: 16px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-    button {
-      padding: 12px 20px;
-      background-color: #27ae60;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    .result {
-      margin-top: 1.5em;
-    }
-    .result input {
-      width: 100%;
-    }
-  </style>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Find Payment Link</title>
+<style>
+  body{font-family:Segoe UI;background:#f7f7f7;padding:2em}
+  .container{max-width:600px;margin:auto;background:white;padding:2em;border-radius:10px;box-shadow:0 0 15px rgba(0,0,0,0.1);text-align:center}
+  input,button{width:90%;padding:12px;margin:0.5em 0;font-size:16px;border-radius:6px;border:1px solid #ccc}
+  button{background:#2980b9;color:white;border:none;cursor:pointer}
+  .result{margin-top:2em;display:none;font-size:1.1em}
+  .result a{display:inline-block;margin-top:1em;padding:12px 20px;background:#27ae60;color:white;text-decoration:none;border-radius:6px}
+  .qr-img{width:220px;margin-top:1em;border:1px solid #ccc;border-radius:8px}
+</style>
 </head>
 <body>
   <div class="container">
-    <h2>🔗 Generate Short Payment Link</h2>
+    <h2>🔎 Find Your Payment Link</h2>
+    <input id="searchOrderId" placeholder="Enter Order ID">
+    <button onclick="searchOrder()">Search</button>
 
-    <input type="number" id="amount" placeholder="Amount (₹)">
-    <input type="text" id="orderId" placeholder="Order ID">
-    <input type="text" id="customerName" placeholder="Customer Name">
-    <input type="text" id="mobile" placeholder="Mobile Number">
-    <input type="date" id="orderDate">
-
-    <button onclick="generateShortLink()">Generate Link</button>
-
-    <div class="result" id="resultBox" style="display:none;">
-      <p>📎 Short Link:</p>
-      <input type="text" id="resultLink" readonly>
-      <button onclick="copyLink()">Copy</button>
+    <div id="searchResult" class="result">
+      <div id="orderDetails"></div>
+      <img id="qrImage" class="qr-img" src="88.png" alt="QR Code">
+      <br>
+      <a id="payLink" href="#" target="_blank">Pay Now</a>
     </div>
   </div>
 
   <script>
-    function generateShortLink() {
-      const amount = document.getElementById("amount").value.trim();
-      const orderId = document.getElementById("orderId").value.trim();
-      const name = document.getElementById("customerName").value.trim();
-      const mobile = document.getElementById("mobile").value.trim();
-      const date = document.getElementById("orderDate").value;
-
-      if (!amount || !orderId || !name || !mobile || !date) {
-        alert("Fill in all fields.");
-        return;
+    let orders = [];
+    async function loadOrders() {
+      try {
+        const resp = await fetch('https://pothabattulavinod.github.io/mer/orders.json');
+        if (!resp.ok) throw new Error(resp.status);
+        orders = await resp.json();
+      } catch (e) {
+        console.error('Failed to load orders:', e);
+        document.body.innerHTML = '<p style="color:red">Unable to load orders. Please try again later.</p>';
       }
-
-      const ref = `R${Date.now().toString().slice(-6)}`; // e.g. R735812
-
-      // Save in localStorage (simple offline mapping)
-      const data = { amount, orderId, name, mobile, date };
-      localStorage.setItem(ref, JSON.stringify(data));
-
-      const shortLink = `pay.html?ref=${ref}`;
-      document.getElementById("resultLink").value = shortLink;
-      document.getElementById("resultBox").style.display = "block";
     }
 
-    function copyLink() {
-      const link = document.getElementById("resultLink");
-      link.select();
-      document.execCommand("copy");
-      alert("Link copied!");
+    function searchOrder() {
+      const id = document.getElementById('searchOrderId').value.trim();
+      const o = orders.find(x => x.orderId === id);
+      const res = document.getElementById('searchResult');
+      const det = document.getElementById('orderDetails');
+      const link = document.getElementById('payLink');
+
+      if (!o) {
+        det.innerHTML = '<span style="color:red;">❌ Order ID not found.</span>';
+        link.style.display = 'none';
+      } else {
+        det.innerHTML = `
+          <strong>Name:</strong> ${o.name}<br>
+          <strong>Mobile:</strong> ${o.mobile}<br>
+          <strong>Order ID:</strong> ${o.orderId}<br>
+          <strong>Amount:</strong> ₹${o.amount}<br>
+          <strong>Date:</strong> ${o.date}
+        `;
+        const upiUrl = `upi://pay?pa=pothabattulavinodyadav@ybl&pn=Vinod%20Yadav&am=${o.amount}&cu=INR&tn=${encodeURIComponent('Order#'+o.orderId+' by '+o.name)}`;
+        link.href = upiUrl;
+        link.textContent = `Pay ₹${o.amount}`;
+        link.style.display = 'inline-block';
+      }
+      res.style.display = 'block';
     }
+
+    window.onload = loadOrders;
   </script>
 </body>
 </html>
