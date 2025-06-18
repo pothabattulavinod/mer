@@ -3,109 +3,74 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Find Your Order - Orifice Delivery</title>
+  <title>Find Payment Link</title>
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f7f7f7;
-      padding: 2em;
-    }
-    .container {
-      max-width: 600px;
-      margin: auto;
-      background: #fff;
-      padding: 2em;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-    input {
-      width: 90%;
-      padding: 12px;
-      margin: 0.5em 0;
-      font-size: 16px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-    button {
-      padding: 12px 20px;
-      background-color: #2980b9;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    .result {
-      margin-top: 2em;
-      display: none;
-      font-size: 1.1em;
-    }
-    .result a {
-      display: inline-block;
-      margin-top: 1em;
-      padding: 10px 20px;
-      background: #27ae60;
-      color: white;
-      text-decoration: none;
-      border-radius: 6px;
-    }
+    body { font-family:'Segoe UI'; background:#f7f7f7; padding:2em }
+    .container { max-width:600px; margin:auto; background:#fff; padding:2em; border-radius:10px; box-shadow:0 0 15px rgba(0,0,0,0.1); text-align:center }
+    input, button { width:90%; padding:12px; margin:0.5em 0; font-size:16px; }
+    button { background:#2980b9; color:#fff; border:none; border-radius:6px; cursor:pointer }
+    .result { margin-top:2em; display:none; font-size:1.1em }
+    .result a { display:inline-block; margin-top:1em; padding:12px 20px; background:#27ae60; color:#fff; text-decoration:none; border-radius:6px}
+    .qr-img { width:220px; margin-top:1em; border:1px solid #ccc; border-radius:8px; }
   </style>
 </head>
 <body>
   <div class="container">
     <h2>🔎 Find Your Payment Link</h2>
-    <p>Enter your Order ID to search for your payment link</p>
     <input type="text" id="searchOrderId" placeholder="Enter Order ID">
     <button onclick="searchOrder()">Search</button>
-
     <div id="searchResult" class="result">
       <div id="orderDetails"></div>
+      <img id="qrImage" class="qr-img" src="88.png" alt="QR Code" />
+      <br>
       <a id="payLink" href="#" target="_blank">Pay Now</a>
     </div>
   </div>
 
   <script>
-    function searchOrder() {
-      const inputId = document.getElementById("searchOrderId").value.trim();
-      const resultDiv = document.getElementById("searchResult");
-      const orderDiv = document.getElementById("orderDetails");
-      const payLink = document.getElementById("payLink");
+    let orders = [];
 
-      let found = false;
-
-      // Search through localStorage keys
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        try {
-          const data = JSON.parse(localStorage.getItem(key));
-          if (data.orderId === inputId) {
-            // Match found
-            found = true;
-            orderDiv.innerHTML = `
-              <strong>Name:</strong> ${data.name}<br>
-              <strong>Mobile:</strong> ${data.mobile}<br>
-              <strong>Amount:</strong> ₹${data.amount}<br>
-              <strong>Date:</strong> ${data.date}
-            `;
-            payLink.href = `pay.html?ref=${key}`;
-            payLink.textContent = `Pay ₹${data.amount} for Order #${data.orderId}`;
-            resultDiv.style.display = "block";
-            break;
-          }
-        } catch (e) {
-          continue;
-        }
-      }
-
-      if (!found) {
-        resultDiv.style.display = "block";
-        orderDiv.innerHTML = `<span style="color:red;">❌ Order ID not found.</span>`;
-        payLink.style.display = "none";
-      } else {
-        payLink.style.display = "inline-block";
+    async function loadOrders() {
+      const url = 'https://raw.githubusercontent.com/pothabattulavinod/mer/main/orders.json';
+      try {
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error(resp.status);
+        orders = await resp.json();
+      } catch (e) {
+        console.error('Failed to load orders:', e);
+        document.body.innerHTML = '<p style="color:red">Unable to load orders. Please try again later.</p>';
       }
     }
+
+    function searchOrder() {
+      const searchId = document.getElementById('searchOrderId').value.trim();
+      const resDiv = document.getElementById('searchResult');
+      const details = document.getElementById('orderDetails');
+      const link = document.getElementById('payLink');
+
+      const order = orders.find(o => o.orderId === searchId);
+      if (!order) {
+        details.innerHTML = '<span style="color:red">❌ Order ID not found.</span>';
+        link.style.display = 'none';
+      } else {
+        details.innerHTML = `
+          <strong>Name:</strong> ${order.name}<br>
+          <strong>Mobile:</strong> ${order.mobile}<br>
+          <strong>Order ID:</strong> ${order.orderId}<br>
+          <strong>Amount:</strong> ₹${order.amount}<br>
+          <strong>Date:</strong> ${order.date}
+        `;
+        const upiId = 'pothabattulavinodyadav@ybl';
+        const note = encodeURIComponent(`Order#${order.orderId} by ${order.name}`);
+        const upiURL = `upi://pay?pa=${upiId}&pn=Vinod%20Yadav&am=${order.amount}&cu=INR&tn=${note}`;
+        link.href = upiURL;
+        link.textContent = `Pay ₹${order.amount}`;
+        link.style.display = 'inline-block';
+      }
+      resDiv.style.display = 'block';
+    }
+
+    window.onload = loadOrders;
   </script>
 </body>
 </html>
