@@ -1,70 +1,91 @@
 <!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Find Payment Link</title>
-<style>
-  body{font-family:Segoe UI;background:#f7f7f7;padding:2em}
-  .container{max-width:600px;margin:auto;background:white;padding:2em;border-radius:10px;box-shadow:0 0 15px rgba(0,0,0,0.1);text-align:center}
-  input,button{width:90%;padding:12px;margin:0.5em 0;font-size:16px;border-radius:6px;border:1px solid #ccc}
-  button{background:#2980b9;color:white;border:none;cursor:pointer}
-  .result{margin-top:2em;display:none;font-size:1.1em}
-  .result a{display:inline-block;margin-top:1em;padding:12px 20px;background:#27ae60;color:white;text-decoration:none;border-radius:6px}
-  .qr-img{width:220px;margin-top:1em;border:1px solid #ccc;border-radius:8px}
-</style>
+<head>
+  <meta charset="UTF-8">
+  <title>Update Orders on GitHub</title>
+  <style>
+    body { font-family: Arial; background: #f0f0f0; padding: 2em; }
+    .container { background: white; padding: 2em; max-width: 600px; margin: auto; border-radius: 10px; }
+    input, button { width: 100%; padding: 10px; margin: 8px 0; }
+    textarea { width: 100%; height: 200px; }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h2>🔎 Find Your Payment Link</h2>
-    <input id="searchOrderId" placeholder="Enter Order ID">
-    <button onclick="searchOrder()">Search</button>
+<div class="container">
+  <h2>📝 Add Order to GitHub (orders.json)</h2>
+  <input id="orderId" placeholder="Order ID" />
+  <input id="amount" placeholder="Amount" />
+  <input id="name" placeholder="Customer Name" />
+  <input id="mobile" placeholder="Mobile Number" />
+  <input id="date" type="date" />
+  <input id="ref" placeholder="Reference" />
+  <input id="token" placeholder="GitHub Token (keep private)" />
+  <button onclick="addOrder()">Add Order & Update GitHub</button>
+  <p id="status"></p>
+  <textarea id="jsonPreview" readonly></textarea>
+</div>
 
-    <div id="searchResult" class="result">
-      <div id="orderDetails"></div>
-      <img id="qrImage" class="qr-img" src="88.png" alt="QR Code">
-      <br>
-      <a id="payLink" href="#" target="_blank">Pay Now</a>
-    </div>
-  </div>
+<script>
+  const owner = "pothabattulavinod";
+  const repo = "mer";
+  const path = "orders.json";
 
-  <script>
+  async function addOrder() {
+    const status = document.getElementById("status");
+    status.textContent = "🔄 Loading existing orders...";
+
+    const token = document.getElementById("token").value;
+    const headers = {
+      "Authorization": `token ${token}`,
+      "Accept": "application/vnd.github.v3+json"
+    };
+
+    // Step 1: Get existing orders.json
+    const fileResp = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
+      headers
+    });
+    const fileData = await fileResp.json();
+    const sha = fileData.sha;
+    const content = atob(fileData.content); // decode base64
     let orders = [];
-    async function loadOrders() {
-      try {
-        const resp = await fetch('https://pothabattulavinod.github.io/mer/orders.json');
-        if (!resp.ok) throw new Error(resp.status);
-        orders = await resp.json();
-      } catch (e) {
-        console.error('Failed to load orders:', e);
-        document.body.innerHTML = '<p style="color:red">Unable to load orders. Please try again later.</p>';
-      }
+    try {
+      orders = JSON.parse(content);
+    } catch (e) {
+      return status.textContent = "❌ Error parsing existing JSON.";
     }
 
-    function searchOrder() {
-      const id = document.getElementById('searchOrderId').value.trim();
-      const o = orders.find(x => x.orderId === id);
-      const res = document.getElementById('searchResult');
-      const det = document.getElementById('orderDetails');
-      const link = document.getElementById('payLink');
+    // Step 2: Add new order
+    const newOrder = {
+      orderId: document.getElementById("orderId").value,
+      amount: document.getElementById("amount").value,
+      name: document.getElementById("name").value,
+      mobile: document.getElementById("mobile").value,
+      date: document.getElementById("date").value,
+      ref: document.getElementById("ref").value
+    };
+    orders.push(newOrder);
 
-      if (!o) {
-        det.innerHTML = '<span style="color:red;">❌ Order ID not found.</span>';
-        link.style.display = 'none';
-      } else {
-        det.innerHTML = `
-          <strong>Name:</strong> ${o.name}<br>
-          <strong>Mobile:</strong> ${o.mobile}<br>
-          <strong>Order ID:</strong> ${o.orderId}<br>
-          <strong>Amount:</strong> ₹${o.amount}<br>
-          <strong>Date:</strong> ${o.date}
-        `;
-        const upiUrl = `upi://pay?pa=pothabattulavinodyadav@ybl&pn=Vinod%20Yadav&am=${o.amount}&cu=INR&tn=${encodeURIComponent('Order#'+o.orderId+' by '+o.name)}`;
-        link.href = upiUrl;
-        link.textContent = `Pay ₹${o.amount}`;
-        link.style.display = 'inline-block';
-      }
-      res.style.display = 'block';
+    const updatedContent = btoa(JSON.stringify(orders, null, 2)); // encode to base64
+    document.getElementById("jsonPreview").value = JSON.stringify(orders, null, 2);
+
+    // Step 3: PUT to GitHub
+    status.textContent = "📤 Updating GitHub file...";
+    const updateResp = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify({
+        message: `Add order ${newOrder.orderId}`,
+        content: updatedContent,
+        sha: sha
+      })
+    });
+
+    if (updateResp.ok) {
+      status.textContent = "✅ orders.json updated on GitHub.";
+    } else {
+      status.textContent = "❌ Failed to update GitHub file.";
     }
-
-    window.onload = loadOrders;
-  </script>
+  }
+</script>
 </body>
 </html>
