@@ -1,27 +1,25 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Find Payment Link</title>
-  <style>
-    body { font-family:'Segoe UI'; background:#f7f7f7; padding:2em }
-    .container { max-width:600px; margin:auto; background:#fff; padding:2em; border-radius:10px; box-shadow:0 0 15px rgba(0,0,0,0.1); text-align:center }
-    input, button { width:90%; padding:12px; margin:0.5em 0; font-size:16px; }
-    button { background:#2980b9; color:#fff; border:none; border-radius:6px; cursor:pointer }
-    .result { margin-top:2em; display:none; font-size:1.1em }
-    .result a { display:inline-block; margin-top:1em; padding:12px 20px; background:#27ae60; color:#fff; text-decoration:none; border-radius:6px}
-    .qr-img { width:220px; margin-top:1em; border:1px solid #ccc; border-radius:8px; }
-  </style>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Find Payment Link</title>
+<style>
+  body{font-family:Segoe UI;background:#f7f7f7;padding:2em}
+  .container{max-width:600px;margin:auto;background:white;padding:2em;border-radius:10px;box-shadow:0 0 15px rgba(0,0,0,0.1);text-align:center}
+  input,button{width:90%;padding:12px;margin:0.5em 0;font-size:16px;border-radius:6px;border:1px solid #ccc}
+  button{background:#2980b9;color:white;border:none;cursor:pointer}
+  .result{margin-top:2em;display:none;font-size:1.1em}
+  .result a{display:inline-block;margin-top:1em;padding:12px 20px;background:#27ae60;color:white;text-decoration:none;border-radius:6px}
+  .qr-img{width:220px;margin-top:1em;border:1px solid #ccc;border-radius:8px}
+</style>
 </head>
 <body>
   <div class="container">
     <h2>🔎 Find Your Payment Link</h2>
-    <input type="text" id="searchOrderId" placeholder="Enter Order ID">
+    <input id="searchOrderId" placeholder="Enter Order ID">
     <button onclick="searchOrder()">Search</button>
+
     <div id="searchResult" class="result">
       <div id="orderDetails"></div>
-      <img id="qrImage" class="qr-img" src="88.png" alt="QR Code" />
+      <img id="qrImage" class="qr-img" src="88.png" alt="QR Code">
       <br>
       <a id="payLink" href="#" target="_blank">Pay Now</a>
     </div>
@@ -29,11 +27,9 @@
 
   <script>
     let orders = [];
-
     async function loadOrders() {
-      const url = 'https://pothabattulavinod.github.io/mer/orders.json';
       try {
-        const resp = await fetch(url);
+        const resp = await fetch('https://pothabattulavinod.github.io/mer/orders.json');
         if (!resp.ok) throw new Error(resp.status);
         orders = await resp.json();
       } catch (e) {
@@ -43,31 +39,29 @@
     }
 
     function searchOrder() {
-      const searchId = document.getElementById('searchOrderId').value.trim();
-      const resDiv = document.getElementById('searchResult');
-      const details = document.getElementById('orderDetails');
+      const id = document.getElementById('searchOrderId').value.trim();
+      const o = orders.find(x => x.orderId === id);
+      const res = document.getElementById('searchResult');
+      const det = document.getElementById('orderDetails');
       const link = document.getElementById('payLink');
 
-      const order = orders.find(o => o.orderId === searchId);
-      if (!order) {
-        details.innerHTML = '<span style="color:red">❌ Order ID not found.</span>';
+      if (!o) {
+        det.innerHTML = '<span style="color:red;">❌ Order ID not found.</span>';
         link.style.display = 'none';
       } else {
-        details.innerHTML = `
-          <strong>Name:</strong> ${order.name}<br>
-          <strong>Mobile:</strong> ${order.mobile}<br>
-          <strong>Order ID:</strong> ${order.orderId}<br>
-          <strong>Amount:</strong> ₹${order.amount}<br>
-          <strong>Date:</strong> ${order.date}
+        det.innerHTML = `
+          <strong>Name:</strong> ${o.name}<br>
+          <strong>Mobile:</strong> ${o.mobile}<br>
+          <strong>Order ID:</strong> ${o.orderId}<br>
+          <strong>Amount:</strong> ₹${o.amount}<br>
+          <strong>Date:</strong> ${o.date}
         `;
-        const upiId = 'pothabattulavinodyadav@ybl';
-        const note = encodeURIComponent(`Order#${order.orderId} by ${order.name}`);
-        const upiURL = `upi://pay?pa=${upiId}&pn=Vinod%20Yadav&am=${order.amount}&cu=INR&tn=${note}`;
-        link.href = upiURL;
-        link.textContent = `Pay ₹${order.amount}`;
+        const upiUrl = `upi://pay?pa=pothabattulavinodyadav@ybl&pn=Vinod%20Yadav&am=${o.amount}&cu=INR&tn=${encodeURIComponent('Order#'+o.orderId+' by '+o.name)}`;
+        link.href = upiUrl;
+        link.textContent = `Pay ₹${o.amount}`;
         link.style.display = 'inline-block';
       }
-      resDiv.style.display = 'block';
+      res.style.display = 'block';
     }
 
     window.onload = loadOrders;
