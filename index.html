@@ -52,6 +52,7 @@
       margin-top: 1em;
       border: 1px solid #ccc;
       border-radius: 8px;
+      display: none; /* initially hidden */
     }
   </style>
 </head>
@@ -107,7 +108,7 @@
         link.href = upiUrl;
         link.textContent = `Pay ₹${o.amount}`;
         link.style.display = 'inline-block';
-        qr.style.display = 'block';
+        qr.style.display = 'block'; // show QR
       }
 
       res.style.display = 'block';
