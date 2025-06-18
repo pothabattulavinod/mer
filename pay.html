@@ -25,6 +25,8 @@
     }
     .qr-code img {
       width: 220px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
     }
     .upi-button {
       display: inline-block;
@@ -34,6 +36,7 @@
       text-decoration: none;
       border-radius: 6px;
       font-size: 16px;
+      margin-top: 1em;
     }
   </style>
 </head>
@@ -42,7 +45,7 @@
     <h2>🛒 Pay for Your Order</h2>
     <div id="details" class="info">Loading payment details...</div>
     <div class="qr-code">
-      <img id="qrImg" src="" alt="QR Code" />
+      <img src="88.png" alt="Fixed QR Code" />
     </div>
     <a id="upiLink" class="upi-button" href="#" target="_blank">Pay Now</a>
   </div>
@@ -59,7 +62,6 @@
       const upiId = "pothabattulavinodyadav@ybl";
       const note = `Order#${orderId} by ${name}`;
       const upiUrl = `upi://pay?pa=${upiId}&pn=Vinod%20Yadav&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
-      const qrUrl = `https://chart.googleapis.com/chart?cht=qr&chs=240x240&chl=${encodeURIComponent(upiUrl)}`;
 
       document.getElementById("details").innerHTML = `
         <strong>Name:</strong> ${name}<br>
@@ -68,7 +70,6 @@
         <strong>Amount:</strong> ₹${amount}<br>
         <strong>Date:</strong> ${date}
       `;
-      document.getElementById("qrImg").src = qrUrl;
       document.getElementById("upiLink").href = upiUrl;
       document.getElementById("upiLink").textContent = `Pay ₹${amount}`;
     }
