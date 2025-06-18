@@ -6,7 +6,7 @@
   <title>Find Payment Link</title>
   <style>
     body {
-      font-family: Segoe UI, sans-serif;
+      font-family: 'Segoe UI', sans-serif;
       background: #f7f7f7;
       padding: 2em;
     }
@@ -16,7 +16,7 @@
       background: white;
       padding: 2em;
       border-radius: 10px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
       text-align: center;
     }
     input, button {
@@ -74,8 +74,7 @@
 
     async function loadOrders() {
       try {
-        const timestamp = new Date().getTime(); // Prevent cache
-        const resp = await fetch(`https://pothabattulavinod.github.io/mer/orders.json?t=${timestamp}`);
+        const resp = await fetch('https://pothabattulavinod.github.io/mer/orders.json');
         if (!resp.ok) throw new Error(resp.status);
         orders = await resp.json();
       } catch (e) {
@@ -90,10 +89,12 @@
       const res = document.getElementById('searchResult');
       const det = document.getElementById('orderDetails');
       const link = document.getElementById('payLink');
+      const qr = document.getElementById('qrImage');
 
       if (!o) {
         det.innerHTML = '<span style="color:red;">❌ Order ID not found.</span>';
         link.style.display = 'none';
+        qr.style.display = 'none';
       } else {
         det.innerHTML = `
           <strong>Name:</strong> ${o.name}<br>
@@ -106,7 +107,9 @@
         link.href = upiUrl;
         link.textContent = `Pay ₹${o.amount}`;
         link.style.display = 'inline-block';
+        qr.style.display = 'block';
       }
+
       res.style.display = 'block';
     }
 
