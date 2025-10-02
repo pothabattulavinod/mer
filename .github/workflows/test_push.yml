@@ -1,0 +1,42 @@
+name: Test Git Push
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      # 2. Create/update a test file
+      - name: Update test file
+        run: |
+          echo "Test push at $(date)" >> test_push.txt
+
+      # 3. Commit and push using PAT
+      - name: Commit and push
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          git config --global user.name "pothabattulavinod"
+          git config --global user.email "vinodyadavpothabattula666@gmail.com"
+
+          git add test_push.txt
+
+          if ! git diff-index --quiet HEAD; then
+            git commit -m "Test push [skip ci]"
+          else
+            echo "No changes to commit"
+          fi
+
+          git remote remove origin
+          git remote add origin https://x-access-token:${GH_PAT}@github.com/pothabattulavinod/mer.git
+
+          git push origin HEAD:main
