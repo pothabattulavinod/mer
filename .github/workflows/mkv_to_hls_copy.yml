@@ -54,7 +54,7 @@ jobs:
           git config --global user.name "pothabattulavinod"
           git config --global user.email "vinodyadavpothabattula666@gmail.com"
 
-          git add hls_copy
+          git add zebrahd
 
           if ! git diff-index --quiet HEAD; then
             git commit -m "Add HLS copy output [skip ci]"
