@@ -1,4 +1,4 @@
-name: RC Transaction Check
+name: RC Update Check
 
 on:
   workflow_dispatch:   # manual trigger only
