@@ -27,10 +27,20 @@ jobs:
       # 5. Commit and push results using GH_PAT
       - name: Commit and push results
         env:
-          GH_PAT: ${{ secrets.GH_PAT }}   # Make sure you created this secret in repo
+          GH_PAT: ${{ secrets.GH_PAT }}   # Make sure this secret exists
         run: |
+          # Configure Git
           git config --global user.name "pothabattulavinod"
           git config --global user.email "vinodyadavpothabattula666@gmail.com"
+          
+          # Stage changes
           git add 10trns_current.json
+          
+          # Commit changes if there are any
           git commit -m "Update RC transaction results [skip ci]" || echo "No changes to commit"
-          git push https://x-access-token:$GH_PAT@github.com/pothabattulavinod/mer.git HEAD:main
+          
+          # Update remote URL to use PAT
+          git remote set-url origin https://x-access-token:$GH_PAT@github.com/pothabattulavinod/mer.git
+          
+          # Push to main branch
+          git push origin main
