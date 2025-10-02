@@ -25,11 +25,11 @@ jobs:
       - name: Convert MKV to HLS (No Encode)
         run: |
           # Output folder
-          OUTPUT_FOLDER="hls_copy"
+          OUTPUT_FOLDER="zebrahd"
           mkdir -p "$OUTPUT_FOLDER"
 
           # Input MKV URL
-          INPUT_URL="https://cdn.telugudub.store/Little_Hearts_(2025)_Telugu_HD_720p.mkv"
+          INPUT_URL="https://cdn.telugudub.store/Zebra_(2024)_Telugu_720p.mkv"
 
           # Output playlist path
           OUTPUT_PATH="$OUTPUT_FOLDER/playlist.m3u8"
