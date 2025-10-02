@@ -1,0 +1,64 @@
+name: MKV to M3U8 Conversion
+
+on:
+  workflow_dispatch:  # Run manually
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout repo
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      # 2. Install ffmpeg
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      # 3. Run conversion script
+      - name: Convert MKV to M3U8
+        run: |
+          mkdir -p output
+          
+          # Example MKV URL (replace with your real one)
+          INPUT_URL="https://cdn.telugudub.store/Zebra_(2024)_Telugu_720p.mkv"
+          OUTPUT_PATH="zebra/video.m3u8"
+
+          ffmpeg -i "$INPUT_URL" -sn \
+            -c:v copy -c:a copy \
+            -start_number 0 \
+            -hls_time 10 -hls_list_size 0 -f hls "$OUTPUT_PATH"
+
+          echo "Conversion complete: $OUTPUT_PATH"
+
+      # 4. Commit + Push results
+      - name: Commit and push results
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          git config --global user.name "pothabattulavinod"
+          git config --global user.email "vinodyadavpothabattula666@gmail.com"
+
+          # Move files to repo root (or keep inside /output)
+          cp -r output/* .
+
+          # Stage changes
+          git add .
+
+          # Commit only if changes exist
+          if ! git diff-index --quiet HEAD; then
+            git commit -m "Add converted M3U8 output [skip ci]"
+          else
+            echo "No changes to commit"
+          fi
+
+          # Push back to repo
+          git remote remove origin
+          git remote add origin https://x-access-token:${GH_PAT}@github.com/pothabattulavinod/mer.git
+          git push origin HEAD:main
