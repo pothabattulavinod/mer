@@ -1,14 +1,14 @@
 name: MKV to M3U8 Conversion
 
 on:
-  workflow_dispatch:  # Run manually
+  workflow_dispatch:  # Manual trigger
 
 jobs:
   convert:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout repo
+      # 1. Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
@@ -22,22 +22,26 @@ jobs:
           sudo apt-get install -y ffmpeg
 
       # 3. Run conversion script
-      - name: Convert MKV to M3U8
+      - name: Convert MKV to HLS
         run: |
-          mkdir -p output
+          # Output folder (HLS standard)
+          OUTPUT_FOLDER="zebra"
+          mkdir -p "$OUTPUT_FOLDER"
           
-          # Example MKV URL (replace with your real one)
+          # Input MKV URL (replace with your URL)
           INPUT_URL="https://cdn.telugudub.store/Zebra_(2024)_Telugu_720p.mkv"
-          OUTPUT_PATH="zebra/video.m3u8"
-
+          
+          # Output M3U8 path inside the folder
+          OUTPUT_PATH="$OUTPUT_FOLDER/video.m3u8"
+          
+          # Convert MKV to HLS
           ffmpeg -i "$INPUT_URL" -sn \
-            -c:v copy -c:a copy \
-            -start_number 0 \
-            -hls_time 10 -hls_list_size 0 -f hls "$OUTPUT_PATH"
+                 -c:v copy -c:a copy \
+                 -start_number 0 -hls_time 10 -hls_list_size 0 -f hls "$OUTPUT_PATH"
 
           echo "Conversion complete: $OUTPUT_PATH"
 
-      # 4. Commit + Push results
+      # 4. Commit and push the HLS folder
       - name: Commit and push results
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
@@ -45,20 +49,19 @@ jobs:
           git config --global user.name "pothabattulavinod"
           git config --global user.email "vinodyadavpothabattula666@gmail.com"
 
-          # Move files to repo root (or keep inside /output)
-          cp -r output/* .
+          # Stage HLS folder
+          git add zebra
 
-          # Stage changes
-          git add .
-
-          # Commit only if changes exist
+          # Commit only if there are changes
           if ! git diff-index --quiet HEAD; then
-            git commit -m "Add converted M3U8 output [skip ci]"
+            git commit -m "Add HLS conversion output [skip ci]"
           else
             echo "No changes to commit"
           fi
 
-          # Push back to repo
+          # Set remote with PAT
           git remote remove origin
           git remote add origin https://x-access-token:${GH_PAT}@github.com/pothabattulavinod/mer.git
+
+          # Push changes
           git push origin HEAD:main
